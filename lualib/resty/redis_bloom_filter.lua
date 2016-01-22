@@ -1,4 +1,4 @@
-local _M = {size = 0, precision = 0, name = ""}
+local _M = { }
 local resty_sha1 = require "resty.sha1"
 local redis = require "resty.redis"
 local str = require "resty.string"
@@ -31,14 +31,14 @@ end
 function _M:bf_check(redis_client, data)
     local count_diff = os.time() - last_clock
     if count_temp == 0 or last_clock == 0 or count_diff > 43200 then
-        count_temp = redis_client:get(self.name .. ':count')
+        count_temp = redis_client:get(NAME .. ':count')
         if not count_temp or count_temp == ngx.null then
             return 0
         end
         last_clock = os.time()
     end
 
-    index = math.ceil(count_temp / self.size)
+    index = math.ceil(count_temp / SIZE)
 
     local hash = hash_string(data)
     local h = { }
@@ -47,17 +47,17 @@ function _M:bf_check(redis_client, data)
     h[2] = tonumber(string.sub(hash, 16, 24), 16)
     h[3] = tonumber(string.sub(hash, 24, 32), 16)
 
-    local maxk = maxk_table[index] or math.floor(0.693147180 * math.floor((self.size * math.log(self.precision * math.pow(0.5, index))) / -0.480453013) / self.size)
+    local maxk = maxk_table[index] or math.floor(0.693147180 * math.floor((SIZE * math.log(PRECISION * math.pow(0.5, index))) / -0.480453013) / SIZE)
 
     local b = { }
     for i=1, maxk do
         table.insert(b, h[i % 2] + i * h[2 + (((i + (i % 2)) % 4) / 2)])
         end
         for n=1, index do
-            local key   = self.name .. ':' .. n
+            local key   = NAME .. ':' .. n
             local found = true
-            local bits = bits_table[n] or math.floor((self.size * math.log(self.precision * math.pow(0.5, n))) / -0.480453013)
-            local k = k_table[n] or math.floor(0.693147180 * bits / self.size)
+            local bits = bits_table[n] or math.floor((SIZE * math.log(PRECISION * math.pow(0.5, n))) / -0.480453013)
+            local k = k_table[n] or math.floor(0.693147180 * bits / SIZE)
 
             for i=1, k do
                 if redis_client:getbit(key, b[i] % bits) == 0 then
@@ -75,12 +75,12 @@ function _M:bf_check(redis_client, data)
 end
 
 function _M:bf_add(redis_client, data)
-    local index = math.ceil(redis_client:incr(self.name .. ":count")/self.size)
+    local index = math.ceil(redis_client:incr(NAME .. ":count")/SIZE)
 
-    local key   = self.name .. ':' .. index 
+    local key   = NAME .. ':' .. index 
 
-    local bits = bits_table[index] or math.floor(-(self.size * math.log(self.precision * math.pow(0.5, index))) / 0.480453013)
-    local k = k_table[index] or math.floor(0.693147180 * bits / self.size)
+    local bits = bits_table[index] or math.floor(-(SIZE * math.log(PRECISION * math.pow(0.5, index))) / 0.480453013)
+    local k = k_table[index] or math.floor(0.693147180 * bits / SIZE)
     local hash = hash_string(data)
 
     local h = { }
