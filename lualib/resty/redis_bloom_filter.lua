@@ -3,9 +3,10 @@ local resty_sha1 = require "resty.sha1"
 local redis = require "resty.redis"
 local str = require "resty.string"
 
+-- configuration
 local SIZE = 1000000
 local PRECISION = 0.1
-local NAME = "channelid"
+local NAME = "mydata"
 
 local maxk_table = {}
 local bits_table = {}
