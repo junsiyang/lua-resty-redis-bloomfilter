@@ -23,5 +23,6 @@ Modify them to be perfect for your program.
 redis_client: please new a redis object and make it connected using lua-resty-redis.</br>
 data: the data stored in bloom filter.
 
+Since redis server will be called several times(this is depended on the configuration variables) in one request, please use this carefully when the load of server is heavy.
 
-######*Last, i am glad and open to receive any advise for this function. Thanks for reading*
+######*Last, i am glad and open to receive any advice for this function. Thanks for reading*
